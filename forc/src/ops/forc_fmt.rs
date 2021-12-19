@@ -11,6 +11,7 @@ pub fn format(command: FormatCommand) -> Result<(), FormatError> {
         path: None,
         print_finalized_asm: false,
         print_intermediate_asm: false,
+        print_ir: false,
         binary_outfile: None,
         offline_mode: false,
         silent_mode: false,

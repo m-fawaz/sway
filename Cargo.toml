@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "docstrings",
     "forc",
+    "ir",
     "parser",
     "sway-core",
     "sway-fmt",

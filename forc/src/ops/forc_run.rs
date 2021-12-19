@@ -41,6 +41,7 @@ pub async fn run(command: RunCommand) -> Result<(), CliError> {
                             path: command.path,
                             print_finalized_asm: command.print_finalized_asm,
                             print_intermediate_asm: command.print_intermediate_asm,
+                            print_ir: command.print_ir,
                             binary_outfile: command.binary_outfile,
                             offline_mode: false,
                             silent_mode: command.silent_mode,

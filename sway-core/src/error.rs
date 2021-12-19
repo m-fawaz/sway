@@ -270,7 +270,7 @@ pub enum Warning<'sc> {
     DeadMethod,
     StructFieldNeverRead,
     ShadowingReservedRegister {
-        reg_name: &'sc str,
+        reg_name: String,
     },
 }
 
@@ -426,6 +426,11 @@ pub enum CompileError<'sc> {
          code that triggered this error."
     )]
     Internal(&'static str, Span<'sc>),
+    #[error(
+        "Internal compiler error: {0}\nPlease file an issue on the repository and include the \
+         code that triggered this error."
+    )]
+    InternalOwned(String, Span<'sc>),
     #[error("Unimplemented feature: {0:?}")]
     UnimplementedRule(Rule, Span<'sc>),
     #[error(
@@ -935,6 +940,7 @@ impl<'sc> CompileError<'sc> {
             ParseFailure { span, .. } => span,
             InvalidTopLevelItem(_, span) => span,
             Internal(_, span) => span,
+            InternalOwned(_, span) => span,
             UnimplementedRule(_, span) => span,
             InvalidByteLiteralLength { span, .. } => span,
             ExpectedExprAfterOp { span, .. } => span,

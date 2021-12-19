@@ -29,6 +29,7 @@ pub fn build(command: BuildCommand) -> Result<Vec<u8>, String> {
         binary_outfile,
         print_finalized_asm,
         print_intermediate_asm,
+        print_ir,
         offline_mode,
         silent_mode,
         ..
@@ -63,7 +64,8 @@ pub fn build(command: BuildCommand) -> Result<Vec<u8>, String> {
         manifest_dir.clone(),
     )
     .print_finalized_asm(print_finalized_asm)
-    .print_intermediate_asm(print_intermediate_asm);
+    .print_intermediate_asm(print_intermediate_asm)
+    .print_ir(print_ir);
 
     let mut dependency_graph = HashMap::new();
 

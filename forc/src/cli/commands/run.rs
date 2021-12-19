@@ -34,6 +34,10 @@ pub struct Command {
     #[structopt(long)]
     pub print_intermediate_asm: bool,
 
+    /// Whether to compile to bytecode (false) or to print out the IR (true).
+    #[structopt(long)]
+    pub print_ir: bool,
+
     /// If set, outputs a binary file representing the script bytes.
     #[structopt(short = "o")]
     pub binary_outfile: Option<String>,

@@ -1712,6 +1712,7 @@ mod tests {
             manifest_path: Arc::new("".into()),
             print_intermediate_asm: false,
             print_finalized_asm: false,
+            print_ir: false,
         };
         let mut dead_code_graph: ControlFlowGraph = Default::default();
         let mut dependency_graph = HashMap::new();

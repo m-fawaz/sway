@@ -930,6 +930,128 @@ impl<'sc> Op<'sc> {
             errors,
         )
     }
+
+    // XXX TODO: This 'unchecked' version is here because it was too hard to resolve
+    // borrowing the errors from `Op::parse_opcode()` as 'sc in the IR codegen code.  This needs to
+    // be fixed somehow, maybe with just static spans (COMING SOON!) or maybe static errors.
+    pub(crate) fn parse_opcode_unchecked(
+        name: &str,
+        mut args: Vec<VirtualRegister>,
+        immediate: Option<Ident<'sc>>,
+    ) -> VirtualOp {
+        fn unwrap_imm12<'sc>(immediate: Option<Ident<'sc>>) -> VirtualImmediate12 {
+            let immediate = immediate.unwrap();
+            let imm_val = immediate.primary_name[1..].parse().unwrap();
+            VirtualImmediate12::new(imm_val, immediate.span.clone()).unwrap()
+        }
+        fn unwrap_imm18<'sc>(immediate: Option<Ident<'sc>>) -> VirtualImmediate18 {
+            let immediate = immediate.unwrap();
+            let imm_val = immediate.primary_name[1..].parse().unwrap();
+            VirtualImmediate18::new(imm_val, immediate.span.clone()).unwrap()
+        }
+        fn unwrap_imm24<'sc>(immediate: Option<Ident<'sc>>) -> VirtualImmediate24 {
+            let immediate = immediate.unwrap();
+            let imm_val = immediate.primary_name[1..].parse().unwrap();
+            VirtualImmediate24::new(imm_val, immediate.span.clone()).unwrap()
+        }
+        let r3 = if args.len() == 4 {
+            args.pop().unwrap()
+        } else {
+            VirtualRegister::Constant(ConstantRegister::Zero)
+        };
+        let r2 = if args.len() == 3 {
+            args.pop().unwrap()
+        } else {
+            VirtualRegister::Constant(ConstantRegister::Zero)
+        };
+        let r1 = if args.len() == 2 {
+            args.pop().unwrap()
+        } else {
+            VirtualRegister::Constant(ConstantRegister::Zero)
+        };
+        let r0 = if args.len() == 1 {
+            args.pop().unwrap()
+        } else {
+            VirtualRegister::Constant(ConstantRegister::Zero)
+        };
+
+        match name {
+            "add" => VirtualOp::ADD(r0, r1, r2),
+            "addi" => VirtualOp::ADDI(r0, r1, unwrap_imm12(immediate)),
+            "and" => VirtualOp::AND(r0, r1, r2),
+            "andi" => VirtualOp::ANDI(r0, r1, unwrap_imm12(immediate)),
+            "div" => VirtualOp::DIV(r0, r1, r2),
+            "divi" => VirtualOp::DIVI(r0, r1, unwrap_imm12(immediate)),
+            "eq" => VirtualOp::EQ(r0, r1, r2),
+            "exp" => VirtualOp::EXP(r0, r1, r2),
+            "expi" => VirtualOp::EXPI(r0, r1, unwrap_imm12(immediate)),
+            "gt" => VirtualOp::GT(r0, r1, r2),
+            "lt" => VirtualOp::LT(r0, r1, r2),
+            "mlog" => VirtualOp::MLOG(r0, r1, r2),
+            "mroo" => VirtualOp::MROO(r0, r1, r2),
+            "mod" => VirtualOp::MOD(r0, r1, r2),
+            "modi" => VirtualOp::MODI(r0, r1, unwrap_imm12(immediate)),
+            "move" => VirtualOp::MOVE(r0, r1),
+            "mul" => VirtualOp::MUL(r0, r1, r2),
+            "muli" => VirtualOp::MULI(r0, r1, unwrap_imm12(immediate)),
+            "not" => VirtualOp::NOT(r0, r1),
+            "or" => VirtualOp::OR(r0, r1, r2),
+            "ori" => VirtualOp::ORI(r0, r1, unwrap_imm12(immediate)),
+            "sll" => VirtualOp::SLL(r0, r1, r2),
+            "slli" => VirtualOp::SLLI(r0, r1, unwrap_imm12(immediate)),
+            "srl" => VirtualOp::SRL(r0, r1, r2),
+            "srli" => VirtualOp::SRLI(r0, r1, unwrap_imm12(immediate)),
+            "sub" => VirtualOp::SUB(r0, r1, r2),
+            "subi" => VirtualOp::SUBI(r0, r1, unwrap_imm12(immediate)),
+            "xor" => VirtualOp::XOR(r0, r1, r2),
+            "xori" => VirtualOp::XORI(r0, r1, unwrap_imm12(immediate)),
+            "cimv" => VirtualOp::CIMV(r0, r1, r2),
+            "ctmv" => VirtualOp::CTMV(r0, r1),
+            "ji" => unreachable!("JI disallowed in inline asm"),
+            "jnei" => unreachable!("JNEI disallowed in inline asm"),
+            "ret" => VirtualOp::RET(r0),
+            "retd" => VirtualOp::RETD(r0, r1),
+            "cfei" => VirtualOp::CFEI(unwrap_imm24(immediate)),
+            "cfsi" => VirtualOp::CFSI(unwrap_imm24(immediate)),
+            "lb" => VirtualOp::LB(r0, r1, unwrap_imm12(immediate)),
+            "lw" => unreachable!("LW disallowed in inline asm"),
+            "aloc" => VirtualOp::ALOC(r0),
+            "mcl" => VirtualOp::MCL(r0, r1),
+            "mcli" => VirtualOp::MCLI(r0, unwrap_imm18(immediate)),
+            "mcp" => VirtualOp::MCP(r0, r1, r2),
+            "meq" => VirtualOp::MEQ(r0, r1, r2, r3),
+            "mcpi" => VirtualOp::MCPI(r0, r1, unwrap_imm12(immediate)),
+            "sb" => VirtualOp::SB(r0, r1, unwrap_imm12(immediate)),
+            "sw" => VirtualOp::SW(r0, r1, unwrap_imm12(immediate)),
+            "bhsh" => VirtualOp::BHSH(r0, r1),
+            "bhei" => VirtualOp::BHEI(r0),
+            "burn" => VirtualOp::BURN(r0),
+            "call" => VirtualOp::CALL(r0, r1, r2, r3),
+            "ccp" => VirtualOp::CCP(r0, r1, r2, r3),
+            "croo" => VirtualOp::CROO(r0, r1),
+            "csiz" => VirtualOp::CSIZ(r0, r1),
+            "cb" => VirtualOp::CB(r0),
+            "ldc" => VirtualOp::LDC(r0, r1, r2),
+            "log" => VirtualOp::LOG(r0, r1, r2, r3),
+            "mint" => VirtualOp::MINT(r0),
+            "rvrt" => VirtualOp::RVRT(r0),
+            "sldc" => VirtualOp::SLDC(r0, r1, r2),
+            "srw" => VirtualOp::SRW(r0, r1),
+            "srwq" => VirtualOp::SRWQ(r0, r1),
+            "sww" => VirtualOp::SWW(r0, r1),
+            "swwq" => VirtualOp::SWWQ(r0, r1),
+            "tr" => VirtualOp::TR(r0, r1, r2),
+            "tro" => VirtualOp::TRO(r0, r1, r2, r3),
+            "ecr" => VirtualOp::ECR(r0, r1, r2),
+            "k256" => VirtualOp::K256(r0, r1, r2),
+            "s256" => VirtualOp::S256(r0, r1, r2),
+            "noop" => VirtualOp::NOOP,
+            "flag" => VirtualOp::FLAG(r0),
+            "gm" => VirtualOp::GM(r0, unwrap_imm18(immediate)),
+
+            other => unreachable!("unrecognised op: {}", other),
+        }
+    }
 }
 
 fn single_reg<'sc>(

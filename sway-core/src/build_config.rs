@@ -8,6 +8,7 @@ pub struct BuildConfig {
     pub(crate) manifest_path: Arc<PathBuf>,
     pub(crate) print_intermediate_asm: bool,
     pub(crate) print_finalized_asm: bool,
+    pub(crate) print_ir: bool,
 }
 
 impl BuildConfig {
@@ -25,6 +26,7 @@ impl BuildConfig {
             manifest_path: Arc::new(canonicalized_manifest_path),
             print_intermediate_asm: false,
             print_finalized_asm: false,
+            print_ir: false,
         }
     }
 
@@ -38,6 +40,13 @@ impl BuildConfig {
     pub fn print_finalized_asm(self, a: bool) -> Self {
         Self {
             print_finalized_asm: a,
+            ..self
+        }
+    }
+
+    pub fn print_ir(self, a: bool) -> Self {
+        Self {
+            print_ir: a,
             ..self
         }
     }

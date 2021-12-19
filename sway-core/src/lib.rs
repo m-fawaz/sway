@@ -10,6 +10,7 @@ mod concurrent_slab;
 pub mod constants;
 mod control_flow_analysis;
 mod ident;
+mod optimize;
 pub mod parse_tree;
 mod parser;
 pub mod semantic_analysis;
@@ -17,10 +18,12 @@ mod span;
 mod style;
 pub mod type_engine;
 
-use crate::asm_generation::checks::check_invalid_opcodes;
 pub use crate::parse_tree::*;
 pub use crate::parser::{HllParser, Rule};
-use crate::{asm_generation::compile_ast_to_asm, error::*};
+use crate::{
+    asm_generation::{checks, compile_ast_to_asm},
+    error::*,
+};
 pub use asm_generation::{AbstractInstructionSet, FinalizedAsm, HllAsmSet};
 pub use build_config::BuildConfig;
 use control_flow_analysis::{ControlFlowGraph, Graph};
@@ -353,7 +356,6 @@ pub fn compile_to_ast<'sc>(
     warnings.append(&mut l_warnings);
     errors = dedup_unsorted(errors);
     warnings = dedup_unsorted(warnings);
-
     if !errors.is_empty() {
         return CompileAstResult::Failure { errors, warnings };
     }
@@ -386,7 +388,11 @@ pub fn compile_to_asm<'sc>(
             match tree_type {
                 TreeType::Contract | TreeType::Script | TreeType::Predicate => {
                     let asm = check!(
-                        compile_ast_to_asm(*parse_tree, &build_config),
+                        if true {
+                            compile_ast_to_ir_to_asm(*parse_tree, tree_type, &build_config)
+                        } else {
+                            compile_ast_to_asm(*parse_tree, &build_config)
+                        },
                         return CompilationResult::Failure { errors, warnings },
                         warnings,
                         errors
@@ -404,6 +410,73 @@ pub fn compile_to_asm<'sc>(
             }
         }
     }
+}
+
+use ir::{context::Context, function::Function, optimise};
+
+pub(crate) fn compile_ast_to_ir_to_asm<'sc>(
+    ast: TypedParseTree<'sc>,
+    tree_type: TreeType<'sc>,
+    build_config: &BuildConfig,
+) -> CompileResult<'sc, FinalizedAsm<'sc>> {
+    let mut warnings = Vec::new();
+    let mut errors = Vec::new();
+
+    let mut ir = match optimize::compile_ast(ast) {
+        Ok(ir) => ir,
+        Err(msg) => {
+            errors.push(CompileError::InternalOwned(
+                msg,
+                crate::span::Span {
+                    span: pest::Span::new(" ", 0, 0).unwrap(),
+                    path: None,
+                },
+            ));
+            return err(warnings, errors);
+        }
+    };
+
+    // Inline function calls since we don't support them yet.  For scripts and predicates we inline
+    // into main(), and for contracts we inline into ABI impls, which are found due to them having
+    // a selector.
+    let mut functions_to_inline_to = Vec::new();
+    for (idx, fc) in &ir.functions {
+        if (matches!(tree_type, TreeType::Script | TreeType::Predicate) && fc.name == "main")
+            || (tree_type == TreeType::Contract && fc.selector.is_some())
+        {
+            functions_to_inline_to.push(::ir::function::Function(idx));
+        }
+    }
+    check!(
+        inline_function_calls(&mut ir, &functions_to_inline_to),
+        return err(warnings, errors),
+        warnings,
+        errors
+    );
+
+    if build_config.print_ir {
+        println!("{}", ir);
+    }
+
+    crate::asm_generation::compile_ir_to_asm(&ir, &build_config)
+}
+
+fn inline_function_calls<'sc>(ir: &mut Context, functions: &[Function]) -> CompileResult<'sc, ()> {
+    for function in functions {
+        if let Err(msg) = optimise::inline_all_function_calls(ir, function) {
+            return err(
+                Vec::new(),
+                vec![CompileError::InternalOwned(
+                    msg,
+                    Span {
+                        span: pest::Span::new("", 0, 0).unwrap(),
+                        path: None,
+                    },
+                )],
+            );
+        }
+    }
+    ok((), Vec::new(), Vec::new())
 }
 
 /// Given input Sway source code, compile to a [BytecodeCompilationResult] which contains the asm in
