@@ -2073,6 +2073,9 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
         // Index value is the array element index, not byte nor word offset.
         let index_reg = self.value_to_register(index_val);
 
+        // We could put the OOB check here, though I'm now thinking it would be too wasteful.
+        // See compile_bounds_assertion() in expression/array.rs (or look in Git history).
+
         let instr_reg = self.reg_seqr.next();
         let elem_size = self.ir_type_size_in_bytes(&ty.get_elem_type(self.context).unwrap());
         if elem_size <= 8 {
