@@ -13,7 +13,7 @@ use ir::*;
 // -------------------------------------------------------------------------------------------------
 // XXX This needs to return a CompileResult.
 
-pub(crate) fn compile_ast<'n, 'sc>(ast: TypedParseTree<'sc>) -> Result<Context, String> {
+pub(crate) fn compile_ast(ast: TypedParseTree) -> Result<Context, String> {
     let mut ctx = Context::default();
     match ast {
         TypedParseTree::Script {
@@ -45,7 +45,7 @@ pub(crate) fn compile_ast<'n, 'sc>(ast: TypedParseTree<'sc>) -> Result<Context, 
 
 // -------------------------------------------------------------------------------------------------
 
-fn compile_script<'n, 'sc>(
+fn compile_script<'sc>(
     context: &mut Context,
     main_function: TypedFunctionDeclaration<'sc>,
     namespace: Namespace<'sc>,
@@ -60,7 +60,7 @@ fn compile_script<'n, 'sc>(
     Ok(module)
 }
 
-fn compile_contract<'n, 'sc>(
+fn compile_contract<'sc>(
     context: &mut Context,
     abi_entries: Vec<TypedFunctionDeclaration<'sc>>,
     declarations: Vec<TypedDeclaration<'sc>>,
@@ -126,10 +126,10 @@ fn compile_constant_expression<'sc>(
 // they are monomorphised only at the instantation site.  We must ignore the generic declarations
 // altogether anyway.
 
-fn compile_declarations<'sc>(
+fn compile_declarations(
     context: &mut Context,
     module: Module,
-    declarations: Vec<TypedDeclaration<'sc>>,
+    declarations: Vec<TypedDeclaration>,
 ) -> Result<(), String> {
     for declaration in declarations {
         match declaration {
@@ -161,7 +161,7 @@ fn compile_declarations<'sc>(
 
 // -------------------------------------------------------------------------------------------------
 
-fn create_struct_aggregate<'sc>(
+fn create_struct_aggregate(
     context: &mut Context,
     name: String,
     fields: Vec<OwnedTypedStructField>,
@@ -191,9 +191,9 @@ fn create_struct_aggregate<'sc>(
 
 // -------------------------------------------------------------------------------------------------
 
-fn compile_enum_decl<'sc>(
+fn compile_enum_decl(
     context: &mut Context,
-    enum_decl: TypedEnumDeclaration<'sc>,
+    enum_decl: TypedEnumDeclaration,
 ) -> Result<Aggregate, String> {
     let TypedEnumDeclaration {
         name,
@@ -216,7 +216,7 @@ fn compile_enum_decl<'sc>(
     )
 }
 
-fn create_enum_aggregate<'sc>(
+fn create_enum_aggregate(
     context: &mut Context,
     name: String,
     variants: Vec<OwnedTypedEnumVariant>,
@@ -256,10 +256,10 @@ fn create_enum_aggregate<'sc>(
 
 // -------------------------------------------------------------------------------------------------
 
-fn compile_function<'sc>(
+fn compile_function(
     context: &mut Context,
     module: Module,
-    ast_fn_decl: TypedFunctionDeclaration<'sc>,
+    ast_fn_decl: TypedFunctionDeclaration,
 ) -> Result<(), String> {
     // Currently monomorphisation of generics is inlined into main() and the functions with generic
     // args are still present in the AST declarations, but they can be ignored.
@@ -281,10 +281,10 @@ fn compile_function<'sc>(
 
 // -------------------------------------------------------------------------------------------------
 
-fn compile_fn_with_args<'sc>(
+fn compile_fn_with_args(
     context: &mut Context,
     module: Module,
-    ast_fn_decl: TypedFunctionDeclaration<'sc>,
+    ast_fn_decl: TypedFunctionDeclaration,
     args: Vec<(String, Type)>,
     selector: Option<[u8; 4]>,
 ) -> Result<(), String> {
@@ -317,11 +317,11 @@ fn compile_fn_with_args<'sc>(
 
 // -------------------------------------------------------------------------------------------------
 
-fn compile_impl<'sc>(
+fn compile_impl(
     context: &mut Context,
     module: Module,
     self_type: TypeInfo,
-    ast_methods: Vec<TypedFunctionDeclaration<'sc>>,
+    ast_methods: Vec<TypedFunctionDeclaration>,
 ) -> Result<(), String> {
     for method in ast_methods {
         let args = method
@@ -344,10 +344,10 @@ fn compile_impl<'sc>(
 
 // -------------------------------------------------------------------------------------------------
 
-fn compile_abi_method<'sc>(
+fn compile_abi_method(
     context: &mut Context,
     module: Module,
-    ast_fn_decl: TypedFunctionDeclaration<'sc>,
+    ast_fn_decl: TypedFunctionDeclaration,
 ) -> Result<(), String> {
     let selector = ast_fn_decl.to_fn_selector_value().value.ok_or(format!(
         "Cannot generate selector for ABI method: {}",
@@ -645,13 +645,13 @@ impl<'sc> FnCompiler {
                 let callee_body = callee_body.unwrap();
 
                 // We're going to have to reverse engineer the return type.
-                let return_type = Self::get_codeblock_return_type(&callee_body).unwrap_or_else(||
+                let return_type =
+                    Self::get_codeblock_return_type(&callee_body).unwrap_or_else(||
                     // This code block is missing a return or implicit return.  The only time I've
                     // seen it happen (whether it's 'valid' or not) is in std::storage::store(),
                     // which has a single asm block which also returns nothing.  In this case, it
                     // actually is Unit.
-                    insert_type(TypeInfo::Unit)
-                );
+                    insert_type(TypeInfo::Unit));
 
                 let callee_fn_decl = TypedFunctionDeclaration {
                     name: callee_ident,
@@ -1251,7 +1251,7 @@ fn convert_literal_to_value<'sc>(context: &mut Context, ast_literal: &Literal<'s
     }
 }
 
-fn convert_literal_to_constant<'sc>(ast_literal: &Literal<'sc>) -> Constant {
+fn convert_literal_to_constant(ast_literal: &Literal) -> Constant {
     match ast_literal {
         Literal::U8(n) | Literal::Byte(n) => Constant::new_uint(8, *n as u64),
         Literal::U16(n) => Constant::new_uint(16, *n as u64),
@@ -1276,7 +1276,7 @@ fn convert_resolved_typeid<'sc>(
     )
 }
 
-fn convert_resolved_typeid_no_span<'sc>(
+fn convert_resolved_typeid_no_span(
     context: &mut Context,
     ast_type: &TypeId,
 ) -> Result<Type, String> {
@@ -1308,8 +1308,7 @@ fn convert_resolved_type(context: &mut Context, ast_type: &TypeInfo) -> Result<T
             Some(existing_aggregate) => Type::Struct(existing_aggregate),
             None => {
                 // Let's create a new aggregate from the TypeInfo.
-                create_struct_aggregate(context, name.clone(), fields.clone())
-                    .map(|aggregate| Type::Struct(aggregate))?
+                create_struct_aggregate(context, name.clone(), fields.clone()).map(&Type::Struct)?
             }
         },
         TypeInfo::Enum {
@@ -1320,7 +1319,7 @@ fn convert_resolved_type(context: &mut Context, ast_type: &TypeInfo) -> Result<T
             None => {
                 // Let's create a new aggregate from the TypeInfo.
                 create_enum_aggregate(context, name.clone(), variant_types.clone())
-                    .map(|aggregate| Type::Struct(aggregate))?
+                    .map(&Type::Struct)?
             }
         },
         TypeInfo::Array(elem_type_id, count) => {

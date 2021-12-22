@@ -417,7 +417,7 @@ mod ir_builder {
                 }
                 IrAstConstValue::Unit => Constant::new_unit(),
                 IrAstConstValue::Bool(b) => Constant::new_bool(*b),
-                IrAstConstValue::B256(bs) => Constant::new_b256(bs.clone()),
+                IrAstConstValue::B256(bs) => Constant::new_b256(*bs),
                 IrAstConstValue::Number(n) => Constant::new_uint(64, *n),
                 IrAstConstValue::String(s) => Constant::new_string(s.clone()),
                 IrAstConstValue::Array(el_ty, els) => {
@@ -443,7 +443,7 @@ mod ir_builder {
                 IrAstConstValue::Undef(_) => unreachable!("Can't convert 'undef' to a value."),
                 IrAstConstValue::Unit => Constant::get_unit(context),
                 IrAstConstValue::Bool(b) => Constant::get_bool(context, *b),
-                IrAstConstValue::B256(bs) => Constant::get_b256(context, bs.clone()),
+                IrAstConstValue::B256(bs) => Constant::get_b256(context, *bs),
                 IrAstConstValue::Number(n) => Constant::get_uint(context, 64, *n),
                 IrAstConstValue::String(s) => Constant::get_string(context, s.clone()),
                 IrAstConstValue::Array(..) => {

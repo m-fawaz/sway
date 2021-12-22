@@ -1680,7 +1680,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
         //
         // Stack offsets are in words to both enforce alignment and simplify use with LW/SW.
         let mut stack_base = 0_u64;
-        for (_name, ptr) in function.locals_iter(&self.context) {
+        for (_name, ptr) in function.locals_iter(self.context) {
             let ptr_content = &self.context.pointers[ptr.0];
             if !ptr_content.is_mutable && ptr_content.initializer.is_some() {
                 let constant = ptr_content.initializer.as_ref().unwrap();
@@ -1765,7 +1765,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
     }
 
     fn add_block_label(&mut self, block: Block) {
-        if &block.get_label(&self.context) != "entry" {
+        if &block.get_label(self.context) != "entry" {
             let label = self.block_to_label(&block);
             self.bytecode.push(Op::jump_label(
                 label,
@@ -1802,9 +1802,9 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
         let mut warnings = Vec::new();
         let mut errors = Vec::new();
         self.add_locals(function);
-        for block in function.block_iter(&self.context) {
+        for block in function.block_iter(self.context) {
             self.add_block_label(block);
-            for instr_val in block.instruction_iter(&self.context) {
+            for instr_val in block.instruction_iter(self.context) {
                 check!(
                     self.compile_instruction(&block, &instr_val),
                     return err(warnings, errors),
@@ -1869,10 +1869,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
                     indices,
                 } => self.compile_insert_value(instr_val, aggregate, ty, value, indices),
                 Instruction::Load(ptr) => self.compile_load(instr_val, ptr),
-                Instruction::Phi(_) => {
-                    // Managing the phi value is done in br and cbr compilation.
-                    ()
-                }
+                Instruction::Phi(_) => (), // Managing the phi value is done in br and cbr compilation.
                 Instruction::Ret(ret_val, ty) => self.compile_ret(ret_val, ty),
                 Instruction::Store { ptr, stored_val } => self.compile_store(ptr, stored_val),
             }
@@ -1923,8 +1920,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
 
         let realize_register = |reg_name: &String| {
             inline_reg_map.get(reg_name).cloned().or_else(|| {
-                ConstantRegister::parse_register_name(reg_name)
-                    .map(|reg| VirtualRegister::Constant(reg))
+                ConstantRegister::parse_register_name(reg_name).map(&VirtualRegister::Constant)
             })
         };
 
@@ -1984,7 +1980,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
         // if it was named.
         if let Some(ret_reg_name) = &asm_block.return_name {
             // Lookup and replace the return register.
-            let ret_reg = match realize_register(&ret_reg_name) {
+            let ret_reg = match realize_register(ret_reg_name) {
                 Some(reg) => reg,
                 None => {
                     errors.push(CompileError::UnknownRegister {
@@ -2004,7 +2000,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
             let instr_reg = self.reg_seqr.next();
             inline_ops.push(Op::unowned_register_move_comment(
                 instr_reg.clone(),
-                ret_reg.clone(),
+                ret_reg,
                 "return value from inline asm",
             ));
             self.reg_map.insert(*instr_val, instr_reg);
@@ -2046,9 +2042,9 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
     }
 
     fn compile_branch_to_phi_value(&mut self, from_block: &Block, to_block: &Block) {
-        if let Some(local_val) = to_block.get_phi_val_coming_from(&self.context, from_block) {
+        if let Some(local_val) = to_block.get_phi_val_coming_from(self.context, from_block) {
             let local_reg = self.value_to_register(&local_val);
-            let phi_reg = self.value_to_register(&to_block.get_phi(&self.context));
+            let phi_reg = self.value_to_register(&to_block.get_phi(self.context));
             self.bytecode.push(Op::register_move(
                 phi_reg,
                 local_reg,
@@ -2090,11 +2086,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
             });
             let elem_offs_reg = self.reg_seqr.next();
             self.bytecode.push(Op {
-                opcode: Either::Left(VirtualOp::ADD(
-                    elem_offs_reg.clone(),
-                    base_reg.clone(),
-                    index_reg,
-                )),
+                opcode: Either::Left(VirtualOp::ADD(elem_offs_reg.clone(), base_reg, index_reg)),
                 comment: "extract_element absolute offset".into(),
                 owning_span: None,
             });
@@ -2128,7 +2120,7 @@ impl<'sc, 'ir> AsmBuilder<'sc, 'ir> {
             self.bytecode.push(Op {
                 opcode: Either::Left(VirtualOp::ADD(
                     instr_reg.clone(),
-                    base_reg.clone(),
+                    base_reg,
                     instr_reg.clone(),
                 )),
                 comment: "extract_element absolute offset".into(),
@@ -2938,7 +2930,7 @@ fn ir_constant_to_ast_literal<'sc>(constant: &Constant) -> Literal<'sc> {
         ConstantValue::Unit => Literal::U64(0), // No unit.
         ConstantValue::Bool(b) => Literal::Boolean(*b),
         ConstantValue::Uint(n) => Literal::U64(*n),
-        ConstantValue::B256(bs) => Literal::B256(bs.clone()),
+        ConstantValue::B256(bs) => Literal::B256(*bs),
         ConstantValue::String(_) => {
             Literal::String("STRINGS ARE UNIMPLEMENTED UNTIL WE CAN GET AROUND 'sc")
         }

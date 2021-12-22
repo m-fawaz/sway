@@ -165,7 +165,7 @@ impl Context {
         _array: &Value,
         _ty: &Aggregate,
         _value: &Value,
-        _index_val: &Value
+        _index_val: &Value,
     ) -> Result<(), String> {
         Ok(())
     }

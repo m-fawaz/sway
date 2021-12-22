@@ -939,17 +939,17 @@ impl<'sc> Op<'sc> {
         mut args: Vec<VirtualRegister>,
         immediate: Option<Ident<'sc>>,
     ) -> VirtualOp {
-        fn unwrap_imm12<'sc>(immediate: Option<Ident<'sc>>) -> VirtualImmediate12 {
+        fn unwrap_imm12(immediate: Option<Ident>) -> VirtualImmediate12 {
             let immediate = immediate.unwrap();
             let imm_val = immediate.primary_name[1..].parse().unwrap();
             VirtualImmediate12::new(imm_val, immediate.span.clone()).unwrap()
         }
-        fn unwrap_imm18<'sc>(immediate: Option<Ident<'sc>>) -> VirtualImmediate18 {
+        fn unwrap_imm18(immediate: Option<Ident>) -> VirtualImmediate18 {
             let immediate = immediate.unwrap();
             let imm_val = immediate.primary_name[1..].parse().unwrap();
             VirtualImmediate18::new(imm_val, immediate.span.clone()).unwrap()
         }
-        fn unwrap_imm24<'sc>(immediate: Option<Ident<'sc>>) -> VirtualImmediate24 {
+        fn unwrap_imm24(immediate: Option<Ident>) -> VirtualImmediate24 {
             let immediate = immediate.unwrap();
             let imm_val = immediate.primary_name[1..].parse().unwrap();
             VirtualImmediate24::new(imm_val, immediate.span.clone()).unwrap()
