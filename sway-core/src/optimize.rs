@@ -645,12 +645,13 @@ impl<'sc> FnCompiler {
                 let callee_body = callee_body.unwrap();
 
                 // We're going to have to reverse engineer the return type.
-                //    pub(crate) return_type: TypeId,
-                let return_type = Self::get_codeblock_return_type(&callee_body).ok_or(
-                    "Unable to determine return type of code block when reconstructing \
-                    library function."
-                        .to_owned(),
-                )?;
+                let return_type = Self::get_codeblock_return_type(&callee_body).unwrap_or_else(||
+                    // This code block is missing a return or implicit return.  The only time I've
+                    // seen it happen (whether it's 'valid' or not) is in std::storage::store(),
+                    // which has a single asm block which also returns nothing.  In this case, it
+                    // actually is Unit.
+                    insert_type(TypeInfo::Unit)
+                );
 
                 let callee_fn_decl = TypedFunctionDeclaration {
                     name: callee_ident,
