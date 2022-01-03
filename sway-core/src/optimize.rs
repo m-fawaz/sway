@@ -486,7 +486,6 @@ impl<'sc> FnCompiler {
             TypedExpressionVariant::ArrayIndex { prefix, index } => {
                 self.compile_array_index(context, *prefix, *index)
             }
-            TypedExpressionVariant::MatchExpression { .. } => Err("expr match".into()),
             TypedExpressionVariant::StructExpression {
                 struct_name,
                 fields,
@@ -521,6 +520,12 @@ impl<'sc> FnCompiler {
                 contents,
                 ..
             } => self.compile_enum_expr(context, enum_decl, tag, contents),
+            TypedExpressionVariant::EnumArgAccess {
+                //Prefix: Box<TypedExpression<'sc>>,
+                //Arg_num_to_access: usize,
+                //Resolved_type_of_parent: TypeId,
+                ..
+            } => Err("enum arg access".into()),
             // XXX IGNORE FOR NOW?
             TypedExpressionVariant::AbiCast { .. } => Ok(Constant::get_unit(context)),
         }
