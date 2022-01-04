@@ -1619,15 +1619,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68f2d64f2edebec4ce84ad108148e67e1064789bee435edc5b60ad398714a3a9"
 
 [[package]]
-name = "ir"
-version = "0.1.0"
-dependencies = [
- "generational-arena",
- "peg",
- "prettydiff 0.5.1",
-]
-
-[[package]]
 name = "isahc"
 version = "0.9.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2995,7 +2986,6 @@ dependencies = [
  "fuel-pest",
  "fuel-vm",
  "hex",
- "ir",
  "lazy_static 1.4.0",
  "line-col",
  "pest_derive",
@@ -3005,6 +2995,7 @@ dependencies = [
  "smallvec",
  "source-span",
  "structopt 0.3.25",
+ "sway-ir",
  "sway-types",
  "thiserror",
  "uuid-b64",
@@ -3016,6 +3007,15 @@ version = "0.1.9"
 dependencies = [
  "ropey",
  "sway-core",
+]
+
+[[package]]
+name = "sway-ir"
+version = "0.1.0"
+dependencies = [
+ "generational-arena",
+ "peg",
+ "prettydiff 0.5.1",
 ]
 
 [[package]]

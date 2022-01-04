@@ -36,14 +36,15 @@ fn test_inline(mut path: PathBuf) {
     let expected_bytes = std::fs::read(&path).unwrap();
     let expected = String::from_utf8_lossy(&expected_bytes);
 
-    let mut ir = ir::parser::parse(&input).unwrap();
+    let mut ir = sway_ir::parser::parse(&input).unwrap();
     let main_fn = ir
         .functions
         .iter()
         .find_map(|(idx, fc)| if fc.name == "main" { Some(idx) } else { None })
         .unwrap();
-    ir::optimise::inline_all_function_calls(&mut ir, &ir::function::Function(main_fn)).unwrap();
-    let output = ir::printer::to_string(&ir);
+    sway_ir::optimise::inline_all_function_calls(&mut ir, &sway_ir::function::Function(main_fn))
+        .unwrap();
+    let output = sway_ir::printer::to_string(&ir);
 
     if output != expected {
         println!("{}", prettydiff::diff_lines(&expected, &output));

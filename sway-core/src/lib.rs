@@ -412,7 +412,7 @@ pub fn compile_to_asm<'sc>(
     }
 }
 
-use ir::{context::Context, function::Function, optimise};
+use sway_ir::{context::Context, function::Function, optimise};
 
 pub(crate) fn compile_ast_to_ir_to_asm<'sc>(
     ast: TypedParseTree<'sc>,
@@ -444,7 +444,7 @@ pub(crate) fn compile_ast_to_ir_to_asm<'sc>(
         if (matches!(tree_type, TreeType::Script | TreeType::Predicate) && fc.name == "main")
             || (tree_type == TreeType::Contract && fc.selector.is_some())
         {
-            functions_to_inline_to.push(::ir::function::Function(idx));
+            functions_to_inline_to.push(::sway_ir::function::Function(idx));
         }
     }
     check!(

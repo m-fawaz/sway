@@ -3,7 +3,7 @@ use std::{
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Write},
 };
 
-use ir::{function::Function, optimise, Context};
+use sway_ir::{function::Function, optimise, Context};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     let input_str = read_from_input(&config.input_path)?;
 
     // Parse it. XXX Improve this error message too.
-    let mut ir = ir::parser::parse(&input_str).map_err(&str_to_err)?;
+    let mut ir = sway_ir::parser::parse(&input_str).map_err(&str_to_err)?;
 
     // Perform optimisation passes in order.
     for pass in config.passes {

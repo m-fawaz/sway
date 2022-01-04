@@ -1479,7 +1479,7 @@ fn ret_or_retd_value<'sc>(
 // But this is not ideal and needs to be refactored:
 // - AsmNamespace is tied to data structures from other stages like Ident and Literal.
 
-use ir::*;
+use sway_ir::*;
 
 pub fn compile_ir_to_asm<'sc, 'ir>(
     ir: &'ir Context,
@@ -2944,7 +2944,7 @@ fn ir_constant_to_ast_literal<'sc>(constant: &Constant) -> Literal<'sc> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ir::parser::parse;
+    use sway_ir::parser::parse;
 
     fn simple_test(input: &str, expected: &str) {
         let ir = parse(input).expect("parsed ir");

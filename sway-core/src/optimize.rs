@@ -8,7 +8,7 @@ use crate::{
     Ident,
 };
 
-use ir::*;
+use sway_ir::*;
 
 // -------------------------------------------------------------------------------------------------
 // XXX This needs to return a CompileResult.
@@ -1399,7 +1399,7 @@ mod tests {
 
         let typed_ast = parse_to_typed_ast(&input);
         let ir = super::compile_ast(typed_ast).unwrap();
-        let output = ir::printer::to_string(&ir);
+        let output = sway_ir::printer::to_string(&ir);
 
         if output != expected {
             println!("{}", prettydiff::diff_lines(&expected, &output));
@@ -1437,14 +1437,14 @@ mod tests {
         let input_bytes = std::fs::read(&path).unwrap();
         let input = String::from_utf8_lossy(&input_bytes);
 
-        let parsed_ctx = match ir::parser::parse(&input) {
+        let parsed_ctx = match sway_ir::parser::parse(&input) {
             Ok(p) => p,
             Err(e) => {
                 println!("{}: {}", path.display(), e);
                 panic!();
             }
         };
-        let printed = ir::printer::to_string(&parsed_ctx);
+        let printed = sway_ir::printer::to_string(&parsed_ctx);
         if printed != input {
             println!("{}", prettydiff::diff_lines(&input, &printed));
         }
