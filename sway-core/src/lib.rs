@@ -412,7 +412,7 @@ pub fn compile_to_asm<'sc>(
     }
 }
 
-use sway_ir::{context::Context, function::Function, optimise};
+use sway_ir::{context::Context, function::Function};
 
 pub(crate) fn compile_ast_to_ir_to_asm<'sc>(
     ast: TypedParseTree<'sc>,
@@ -463,7 +463,7 @@ pub(crate) fn compile_ast_to_ir_to_asm<'sc>(
 
 fn inline_function_calls<'sc>(ir: &mut Context, functions: &[Function]) -> CompileResult<'sc, ()> {
     for function in functions {
-        if let Err(msg) = optimise::inline_all_function_calls(ir, function) {
+        if let Err(msg) = sway_ir::optimize::inline_all_function_calls(ir, function) {
             return err(
                 Vec::new(),
                 vec![CompileError::InternalOwned(

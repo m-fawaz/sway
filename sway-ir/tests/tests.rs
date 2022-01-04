@@ -42,7 +42,7 @@ fn test_inline(mut path: PathBuf) {
         .iter()
         .find_map(|(idx, fc)| if fc.name == "main" { Some(idx) } else { None })
         .unwrap();
-    sway_ir::optimise::inline_all_function_calls(&mut ir, &sway_ir::function::Function(main_fn))
+    sway_ir::optimize::inline_all_function_calls(&mut ir, &sway_ir::function::Function(main_fn))
         .unwrap();
     let output = sway_ir::printer::to_string(&ir);
 

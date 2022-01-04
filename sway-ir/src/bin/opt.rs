@@ -3,7 +3,7 @@ use std::{
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Write},
 };
 
-use sway_ir::{function::Function, optimise, Context};
+use sway_ir::{function::Function, optimize, Context};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ fn perform_inline(ir: &mut Context) -> Result<bool, String> {
         .iter()
         .find_map(|(idx, fc)| if fc.name == "main" { Some(idx) } else { None })
         .unwrap();
-    optimise::inline_all_function_calls(ir, &Function(main_fn))
+    optimize::inline_all_function_calls(ir, &Function(main_fn))
 }
 
 // -------------------------------------------------------------------------------------------------
