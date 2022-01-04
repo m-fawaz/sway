@@ -458,7 +458,7 @@ pub(crate) fn compile_ast_to_ir_to_asm<'sc>(
         println!("{}", ir);
     }
 
-    crate::asm_generation::compile_ir_to_asm(&ir, build_config)
+    crate::asm_generation::from_ir::compile_ir_to_asm(&ir, build_config)
 }
 
 fn inline_function_calls<'sc>(ir: &mut Context, functions: &[Function]) -> CompileResult<'sc, ()> {
